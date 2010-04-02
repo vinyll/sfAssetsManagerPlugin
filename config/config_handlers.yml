@@ -1,0 +1,2 @@
+config/assets_manager.yml:
+  class: sfAssetsManagerConfigHandler

@@ -154,7 +154,7 @@ class sfAssetsManager
   {
     if(!$this->config)
     {
-      $this->loadConfigurationFile(sfConfig::get('sf_config_dir').'/assets_manager.yml');
+      $this->config = include(sfContext::getInstance()->getConfigCache()->checkConfig('config/assets_manager.yml'));
     }
     return $this->config;
   }
