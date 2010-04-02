@@ -1,0 +1,11 @@
+packages:
+  jquery:
+    js:   jquery-1.4.2.min.js
+  jquery-ui:
+    import: jquery
+    js:     jquery-ui.js
+    css:    [jquery.theme.css, themeroller.css]
+  homepage:
+    import: jquery-ui
+    js:     [general.js, homepage.js]
+    css:    [homepage.css, othertheme.css]
