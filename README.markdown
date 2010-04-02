@@ -1,7 +1,7 @@
 # sfAssetsManagerPlugin
 
 
-symfony 1.3/1.4 plugin to easily maintain javascripts and stylesheets files
+symfony 1.4/1.3/1.2 plugin to easily maintain javascripts and stylesheets files
 and dependencies in one dedicated place.
 
 ![symfony assets dependencies manager](http://www.symfony-project.org/uploads/plugins/cb885cd82f4cb190dabe2e54dcedf991.png)
@@ -10,7 +10,8 @@ and dependencies in one dedicated place.
 ## Purpose
 
 Using this plugin you will be able to maintain your javascripts and stylesheets 
-configuration and dependencies easily without changing each of your templates.
+configuration and dependencies easily without searching for references in all 
+of your templates.
 
 You will be able to use relative or absolute path, to include js and css files 
 from plugins and to control the location of your assets files.
