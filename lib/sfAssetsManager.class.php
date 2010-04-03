@@ -9,74 +9,18 @@
 class sfAssetsManager
 {
   protected  $response,
-             $config;
+             $config,
+             /**
+              * @property sfAssetsManagerPackageCollection
+              */
+             $packages;
+             
   static protected $instance;
-  
-                    
-  public function __construct()
-  {}
-                    
-  /**
-   * Loads assets from configuration
-   * @param string|array $packages package or array of packages to load
-   * @param string $assetsType 'js' or 'css'. Defines wich type of assets to load (all by default)
-   * @return unknown_type
-   */
-  public function load($packages, $assetsType = null)
-  {
-    $config = $this->getConfiguration();
-    if(!$config || !isset($config['packages']))
-    {
-      throw new sfConfigurationException(sprintf('The %s->load() method requires configuration array() with [packages]. No such configuration exists.', __CLASS__));
-    }
-    if(is_array($packages))
-    {
-      foreach((array) $packages as $package)
-      {
-        $this->loadSinglePackage($package, $config, $assetsType);
-      }
-    }
-    else
-    {
-      $this->loadSinglePackage($packages, $config, $assetsType);
-    }
-  }
-  
-  /**
-   * Loads a package datas
-   * @param string $package
-   * @param array $config
-   * @param string $assetsType [optional, default = null]. 'js' or 'css'
-   */
-  protected function loadSinglePackage($package, $config, $assetsType = null)
-  {
-    $this->log(sprintf('Loading package "%s", asset of type "%s"', $package, $assetsType!==null ? $assetsType : 'all'));
-    if(!isset($config['packages'][$package]))
-    {
-      throw new sfConfigurationException(sprintf('No asset package "%s" found.', $package));
-    }
-    $assets = $config['packages'][$package];
-    if(isset($assets['import']))
-    {
-      $this->load($assets['import'], $assetsType);
-    }
-    if(isset($assets['js']) && ($assetsType === null || $assetsType === 'js'))
-    {
-      is_array($assets['js'])
-          ? $this->addJavascripts($assets['js'])
-          : $this->addJavascript($assets['js']);
-    }
-    if(isset($assets['css']) && ($assetsType === null || $assetsType === 'css'))
-    {
-      is_array($assets['css'])
-          ? $this->addStylesheets($assets['css'])
-          : $this->addStylesheet($assets['css']);
-    }
-  }
-  
+
   
   /**
    * Creates an object and uses it as a Singleton.
+   * This can should though be used as a regular object. Only use this if specifically required.
    * @return sfAssetManager
    */
   static public function getInstance()
@@ -88,61 +32,57 @@ class sfAssetsManager
     return self::$instance;
   }
   
-
-  /**
-   * Adds a javascript path to the response
-   * @param string $js
-   */
-  public function addJavascript($js)
-  {
-    $this->log(sprintf('Adding javascript "%s" to the Response', $js));
-    return $this->getResponse()->addJavascript($js);
-  }
   
   /**
-   * Adds an array of javascripts path to the reponse
-   * @param array $jss
+   * Loads assets from configuration
+   * @param string|array $packageName package(s) name to load
+   * @param string $assetsType 'js', 'css' or null for both. Defines wich type of assets to load
+   *                            (null by default)
    */
-  public function addJavascripts($jss)
+  public function load($packageName, $assetsType = null)
   {
-    foreach($jss as $js)
+    if(is_array($packageName))
     {
-      $this->addJavascript($js);
+      foreach($packageName as $name)
+      {
+        $this->load($name, $assetsType);
+      }
     }
-  }
-  
-  
-  
-  
-  /**
-   * Adds a stylesheet to the Response
-   * @param string $css path to the css file
-   */
-  public function addStylesheet($css)
-  {
-    $this->log(sprintf('Adding stylesheet "%s" to the Response', $css));
-    return $this->getResponse()->addStylesheet($css);
-  }
-  
-  /**
-   * Adds an array of css path
-   * @param array $csss
-   */
-  public function addStylesheets($csss)
-  {
-    foreach($csss as $css)
+    $package = $this->packages->get($packageName);
+    if(!$package)
     {
-      $this->addStylesheet($css);
+      throw new sfConfigurationException(sprintf('No package called "%s" could be found.', $packageName));
     }
+    
+    $javascripts = $assetsType !== 'css'
+                 ? $package->getJavascripts()
+                 : array();
+    $stylesheets = $assetsType !== 'js'
+                 ? $package->getStylesheets()
+                 : array();
+    
+    $this->addToResponse($javascripts, $stylesheets);
   }
   
   
   /**
-   * Injects a Response object into this class
+   * Add assets to the Response
+   * @param array $javascripts
+   * @param array $stylesheets
+   * @return sfWebResponse
    */
-  public function setResponse(sfWebResponse $response)
+  protected function addtoResponse($javascripts, $stylesheets)
   {
-    $this->response = $response;
+    $response = $this->getResponse();
+    foreach($javascripts as $js)
+    {
+      $response->addJavascript($js);
+    }
+    foreach($stylesheets as $css)
+    {
+      $response->addStylesheet($css);
+    }
+    return $response;
   }
   
   
@@ -154,7 +94,7 @@ class sfAssetsManager
   {
     if(!$this->config)
     {
-      $this->config = include(sfContext::getInstance()->getConfigCache()->checkConfig('config/assets_manager.yml'));
+      $this->setConfiguration(include(sfContext::getInstance()->getConfigCache()->checkConfig('config/assets_manager.yml')));
     }
     return $this->config;
   }
@@ -166,13 +106,41 @@ class sfAssetsManager
    */
   public function setConfiguration($config)
   {
+    if(!isset($config['packages']))
+    {
+      throw new sfConfigurationException(sprintf('The %s class requires configuration with "packages" root key.', __CLASS__));
+    }
     $this->config = $config;
+    $this->setPackages($config['packages']);
   }
   
   
-  public function loadConfigurationFile($file)
+  /**
+   * @param sfAssetsManagerPackageCollection $packages
+   */
+  public function setPackages($packages)
   {
-    $this->setConfiguration(sfYaml::load($file));
+    $this->packages = new sfAssetsManagerPackageCollection();
+    $this->packages->fromArray($packages);
+  }
+
+  
+  /**
+   * @return sfAssetsManagerPackageCollection
+   */
+  public function getPackages()
+  {
+    return $this->packages;
+  }
+  
+  
+  /**
+   * Injects a Response object into this class
+   * @param sfWebResponse $response
+   */
+  public function setResponse(sfWebResponse $response)
+  {
+    $this->response = $response;
   }
   
   

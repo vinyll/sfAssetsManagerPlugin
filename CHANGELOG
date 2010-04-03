@@ -1,3 +1,10 @@
+2005-04-05
+----------
+
+* Added Package model
+* Changed the manager to use model objects
+
+
 2005-04-02
 ----------
 
