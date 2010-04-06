@@ -18,6 +18,12 @@ class sfAssetsManager
   static protected $instance;
 
   
+  public function __construct()
+  {
+    $this->loadPackagesConfiguration();
+  }
+  
+  
   /**
    * Creates an object and uses it as a Singleton.
    * This can should though be used as a regular object. Only use this if specifically required.
@@ -48,6 +54,7 @@ class sfAssetsManager
         $this->load($name, $assetsType);
       }
     }
+    
     $package = $this->packages->get($packageName);
     if(!$package)
     {
@@ -92,13 +99,17 @@ class sfAssetsManager
    */
   public function getConfiguration()
   {
-    if(!$this->config)
-    {
-      $this->setConfiguration(include(sfContext::getInstance()->getConfigCache()->checkConfig('config/assets_manager.yml')));
-    }
     return $this->config;
   }
   
+  
+  /**
+   * Loads the assets_manager.yml files
+   */
+  protected function loadPackagesConfiguration()
+  {
+    $this->setConfiguration(include(sfContext::getInstance()->getConfigCache()->checkConfig('config/assets_manager.yml')));
+  }
   
   /**
    * Inject a configuration array
