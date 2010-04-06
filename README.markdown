@@ -48,6 +48,17 @@ Use the helper and import the "mypage" package :
 
 ## Advanced example
 
+If you use this plugin, you should use it for your whole 
+project and therefore you will use sfAssetManager helper
+all the way.
+
+So you can set it up in your configuration (…/config/settings.yml) :
+
+    standard_helpers: [Partial, Cache, sfAssetsManager]
+
+
+And configure your packages (…/config/assets_manager.yml) :
+
     packages:
       jquery:
         js:     http://code.jquery.com/jquery-1.4.2.min.js
