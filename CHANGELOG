@@ -1,11 +1,18 @@
-2005-04-05
+2010-04-07
+----------
+
+* Fixed autoloading configHandler in prod env
+* Thow error when import fails
+
+
+2010-04-05
 ----------
 
 * Added Package model
 * Changed the manager to use model objects
 
 
-2005-04-02
+2010-04-02
 ----------
 
 * Initialized project
