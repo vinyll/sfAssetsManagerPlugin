@@ -131,7 +131,12 @@ class sfAssetsManagerPackage
     $assets = array();
     foreach($this->get('import') as $import)
     {
-      $assets = array_merge($assets, $this->collection->get($import)->$method());
+      $package = $this->collection->get($import);
+      if(!$package)
+      {
+        throw new sfConfigurationException(sprintf('Package "%s" failed to import non existant "%s" package.', $this->name, $import));
+      }
+      $assets = array_merge($assets, $package->$method());
     }
     return array_merge($assets, $this->get($key));
   }
