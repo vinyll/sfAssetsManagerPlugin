@@ -87,7 +87,7 @@ class sfAssetsManagerPackage
    */
   public function fromArray($config)
   {
-    foreach($config as $key => $value)
+    foreach((array) $config as $key => $value)
     {
       if(isset($this->$key))
       {
