@@ -4,13 +4,13 @@ require dirname(__FILE__).'/../../lib/model/sfAssetsManagerPackageCollection.cla
 
 $config = include dirname(__FILE__).'/../fixtures/assets_manager.yml.php';
 
-$manager = new sfAssetsManager();
+$response = new sfWebResponse(new sfEventDispatcher);
+$manager = new sfAssetsManager(false, null, $response);
 $manager->setConfiguration($config);
 
 
 $t = new lime_test(13, new lime_output_color);
 
-$manager->setResponse(new sfWebResponse(new sfEventDispatcher));
 $manager->load('basic');
 $t->diag('Basic js/css package');
 $t->is_deeply(array_keys($manager->getResponse()->getJavascripts()), array('basic.js', '/folder/otherbasic.js'), '->load(basic) includes multiple js in specified order');

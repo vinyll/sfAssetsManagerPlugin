@@ -8,19 +8,48 @@
  */
 class sfAssetsManager
 {
-  protected  $response,
-             $config,
-             /**
-              * @property sfAssetsManagerPackageCollection
-              */
-             $packages;
+  protected  $config;
+  
+  /**
+   * @property sfResponse
+   */
+  protected $response;
              
+  /**
+   * @property sfConfigCache
+   */
+  protected $configCache;
+   
+  /**
+   * @property sfAssetsManagerPackageCollection
+   */
+  protected $packages;
+  
+  /**
+   * @var sfAssetsManager
+   */
   static protected $instance;
 
   
-  public function __construct()
+  /**
+   * @param boolean $autoload Should the configuration be automatically loaded
+   * @param sfResponse $response
+   * @param sfConfigCache $configCache
+   */
+  public function __construct($autoload = true, $configCache = null, $response = null)
   {
-    $this->loadPackagesConfiguration();
+    if($response)
+    {
+      $this->setResponse($response);
+    }
+    if($configCache)
+    {
+      $this->setConfigCache($configCache);
+    }
+    if($autoload)
+    {
+      $this->loadPackagesConfiguration();
+    }
   }
   
   
@@ -94,22 +123,13 @@ class sfAssetsManager
   
   
   /**
-   * Retrieves the global configuration or load the configuration file
-   * @return array The configuration array
-   */
-  public function getConfiguration()
-  {
-    return $this->config;
-  }
-  
-  
-  /**
    * Loads the assets_manager.yml files
    */
   protected function loadPackagesConfiguration()
   {
-    $this->setConfiguration(include(sfContext::getInstance()->getConfigCache()->checkConfig('config/assets_manager.yml')));
+    $this->setConfiguration(include($this->getConfigCache()->checkConfig('config/assets_manager.yml')));
   }
+  
   
   /**
    * Inject a configuration array
@@ -123,6 +143,16 @@ class sfAssetsManager
     }
     $this->config = $config;
     $this->setPackages($config['packages']);
+  }
+  
+  
+  /**
+   * Retrieves the global configuration or load the configuration file
+   * @return array The configuration array
+   */
+  public function getConfiguration()
+  {
+    return $this->config;
   }
   
   
@@ -170,9 +200,26 @@ class sfAssetsManager
   }
   
   
-  protected function log($message)
+  /**
+   * @param sfConfigCache $configCache
+   */
+  public function setConfigCache(sfConfigCache $configCache)
   {
-    //print "\n".$message."\n";
+    $this->configCache = $configCache;
+  }
+  
+  
+  /**
+   *
+   * @return sfConfigCache
+   */
+  public function getConfigCache()
+  {
+    if(!$this->configCache)
+    {
+      return sfContext::getInstance()->getConfigCache();
+    }
+    return $this->configCache;
   }
   
 }
