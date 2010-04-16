@@ -6,7 +6,7 @@ require_once dirname(__FILE__).'/sfAssetsManagerPackage.class.php';
  * @package sfAssetsManager
  * @subpackage model
  */
-class sfAssetsManagerPackageCollection
+class sfAssetsManagerPackageCollection implements Iterator
 {
   protected $packages = array();
   
@@ -79,6 +79,32 @@ class sfAssetsManagerPackageCollection
       $list[$name] = $package;
     }
     return $list;
+  }
+  
+  
+  public function rewind()
+  {
+    reset($this->packages);
+  }
+  
+  public function next()
+  {
+    return next($this->packages);
+  }
+  
+  public function key()
+  {
+    return key($this->packages);
+  }
+  
+  public function valid()
+  {
+    return isset($this->packages[key($this->packages)]);
+  }
+  
+  public function current()
+  {
+    return current($this->packages);
   }
   
 }

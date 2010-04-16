@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__).'/cache/sfAssetsManagerCache.class.php';
 /**
  * Manage Response assets
  *
@@ -9,6 +10,11 @@
 class sfAssetsManager
 {
   protected  $config;
+  
+  /**
+   * @property sfContext
+   */
+  protected $context;
   
   /**
    * @property sfResponse
@@ -25,6 +31,13 @@ class sfAssetsManager
    */
   protected $packages;
   
+  protected $loadedPackages = array();
+  
+  /**
+   * @property sfAssetsManagerCache
+   */
+  protected $cache;
+  
   /**
    * @var sfAssetsManager
    */
@@ -36,8 +49,16 @@ class sfAssetsManager
    * @param sfResponse $response
    * @param sfConfigCache $configCache
    */
-  public function __construct($autoload = true, $configCache = null, $response = null)
+  public function __construct($autoload = true, $configCache = null, $response = null, $context = null)
   {
+    if($context)
+    {
+      $this->context = $context;
+    }
+    else
+    {
+      $this->context = sfContext::getInstance();
+    }
     if($response)
     {
       $this->setResponse($response);
@@ -50,6 +71,7 @@ class sfAssetsManager
     {
       $this->loadPackagesConfiguration();
     }
+    $this->cache = new sfAssetsManagerCache;
   }
   
   
@@ -74,36 +96,43 @@ class sfAssetsManager
    * @param string $assetsType 'js', 'css' or null for both. Defines wich type of assets to load
    *                            (null by default)
    */
-  public function load($packageName, $assetsType = null)
+  public function load($name, $type = null)
   {
-    if(is_array($packageName))
+    if(is_array($name))
     {
-      foreach($packageName as $name)
+      foreach($name as $singleName)
       {
-        $this->load($name, $assetsType);
+        $this->load($singleName, $type);
       }
     }
     
-    $package = $this->packages->get($packageName);
+    $package = $this->packages->get($name);
     if(!$package)
     {
-      throw new sfConfigurationException(sprintf('No package called "%s" could be found.', $packageName));
+      throw new sfConfigurationException(sprintf('No package called "%s" could be found.', $name));
     }
     
-    $javascripts = $assetsType !== 'css'
+    $javascripts = $type !== 'css'
                  ? $package->getJavascripts()
                  : array();
-    $stylesheets = $assetsType !== 'js'
+    $stylesheets = $type !== 'js'
                  ? $package->getStylesheets()
                  : array();
     
     if(sfConfig::get('app_sf_assets_manager_plugin_enable_compressor', false))
     {
-      $javascripts = (array) $this->compress($javascripts, 'js', $packageName);
-      $stylesheets = (array) $this->compress($stylesheets, 'css', $packageName);
+      $javascripts = (array) $this->compress($javascripts, 'js', $name);
+      $stylesheets = (array) $this->compress($stylesheets, 'css', $name);
     }
     
     $this->addToResponse($javascripts, $stylesheets);
+    
+    $this->loadedPackages[] = $package;
+    
+    $this->context->getEventDispatcher()->notify(new sfEvent($this, 'sfAssetsManagerPlugin.load_package'), array(
+      'package'  => $package,
+      'type'     => $type
+    ));
   }
   
   
@@ -129,18 +158,28 @@ class sfAssetsManager
     $minifier = new sfAssetsManagerJSMinifier;
     $minified = $minifier->execute($packed);
     
-    
-    $filename = sfConfig::get('app_sf_assets_manager_plugin_encode_filename', false)
-              ? md5($name)
-              : $name.'.package';
-
-    $outputUri = sprintf('/%s/%s.%s',sfConfig::get(sprintf('sf_web_%s_dir_name', $type), $type), $filename, $type);
+    $outputUri = $this->getFileUri($name, $type);
     $outputPath = sfConfig::get('sf_web_dir').$outputUri;
     
     // create file
     rename($minified, $outputPath);
     
     return $outputUri;
+  }
+  
+  
+  /**
+   * Get the URI for a name and a type
+   * @param string $name package name
+   * @param string $type "css" or "js"
+   * @return string
+   */
+  protected function getFileUri($name, $type)
+  {
+    $filename = sfConfig::get('app_sf_assets_manager_plugin_encode_filename', false)
+              ? md5($name)
+              : sprintf(sfConfig::get('app_sf_assets_manager_plugin_filename_format', '%s'), $name);
+    return sprintf('/%s/%s.%s',sfConfig::get(sprintf('sf_web_%s_dir_name', $type), $type), $filename, $type);
   }
   
   
@@ -288,6 +327,12 @@ class sfAssetsManager
       return sfContext::getInstance()->getConfigCache();
     }
     return $this->configCache;
+  }
+  
+  
+  public function getLoadedPackages()
+  {
+    return $this->loadedPackages;
   }
   
 }
