@@ -97,7 +97,50 @@ class sfAssetsManager
                  ? $package->getStylesheets()
                  : array();
     
+    if(sfConfig::get('app_sf_assets_manager_plugin_enable_compressor', false))
+    {
+      $javascripts = (array) $this->compress($javascripts, 'js', $packageName);
+      $stylesheets = (array) $this->compress($stylesheets, 'css', $packageName);
+    }
+    
     $this->addToResponse($javascripts, $stylesheets);
+  }
+  
+  
+  protected function compress(array $files, $type, $name)
+  {
+    if(empty($files))
+    {
+      return;
+    }
+    
+    // Abslotute files path
+    $sources = array();
+    foreach($files as $file)
+    {
+      $sources[] = $this->getAbsoluteDir($file, $type);
+    }
+    
+    // merge files
+    $packer = new sfAssetsManagerPacker;
+    $packed = $packer->execute($sources);
+    
+    // minify file
+    $minifier = new sfAssetsManagerJSMinifier;
+    $minified = $minifier->execute($packed);
+    
+    
+    $filename = sfConfig::get('app_sf_assets_manager_plugin_encode_filename', false)
+              ? md5($name)
+              : $name.'.package';
+
+    $outputUri = sprintf('/%s/%s.%s',sfConfig::get(sprintf('sf_web_%s_dir_name', $type), $type), $filename, $type);
+    $outputPath = sfConfig::get('sf_web_dir').$outputUri;
+    
+    // create file
+    rename($minified, $outputPath);
+    
+    return $outputUri;
   }
   
   
@@ -107,7 +150,7 @@ class sfAssetsManager
    * @param array $stylesheets
    * @return sfWebResponse
    */
-  protected function addtoResponse($javascripts, $stylesheets)
+  protected function addtoResponse(array $javascripts, array $stylesheets)
   {
     $response = $this->getResponse();
     foreach($javascripts as $js)
@@ -128,6 +171,31 @@ class sfAssetsManager
   protected function loadPackagesConfiguration()
   {
     $this->setConfiguration(include($this->getConfigCache()->checkConfig('config/assets_manager.yml')));
+  }
+  
+
+  protected function getAbsoluteDir($file, $type)
+  {
+    // Compute a absolute local web path
+    if(substr($file, 0, 1) === '/')
+    {
+      $absolute = sfConfig::get('sf_web_dir').$file;
+    }
+    // Compute a url
+    elseif(preg_match('`^https?://.*`', $file))
+    {
+      $absolute = $file;
+    }
+    // Compute relative dir
+    else
+    {
+      $dir = sfConfig::get(
+        sprintf('app_sf_assets_manager_plugin_%s_dir', $type),
+        sfConfig::get('sf_web_dir').'/'.sfConfig::get(sprintf('sf_web_%s_dir_name', $type), $type)
+      );
+      $absolute = $dir.'/'.$file;
+    }
+    return $absolute;
   }
   
   

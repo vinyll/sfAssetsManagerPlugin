@@ -1,0 +1,5 @@
+all:
+  sf_assets_manager_plugin:
+    enable_compressor:    false     # Enable merging and minifying files
+    encode_filename:      false     # Should the file generate be the given package name or encoded
+    

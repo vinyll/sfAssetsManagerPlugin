@@ -30,6 +30,9 @@ return array(
       'js'  => 'full.js'
       ,
       'css' => 'full.css',
+    ),
+    'existing'  => array(
+      'js'      => array('file1.js', 'file2.js')
     )
   )
 );

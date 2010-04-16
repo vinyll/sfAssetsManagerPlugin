@@ -1,15 +1,16 @@
 <?php
 require dirname(__FILE__).'/../bootstrap/unit.php';
 require dirname(__FILE__).'/../../lib/model/sfAssetsManagerPackageCollection.class.php';
+require dirname(__FILE__).'/../../lib/compressor/sfAssetsManagerJSMinifier.class.php';
 
 $config = include dirname(__FILE__).'/../fixtures/assets_manager.yml.php';
 
 $response = new sfWebResponse(new sfEventDispatcher);
-$manager = new sfAssetsManager(false, null, $response);
+$manager = new sfAssetsManager(false, null, clone $response);
 $manager->setConfiguration($config);
 
 
-$t = new lime_test(13, new lime_output_color);
+$t = new lime_test(15, new lime_output_color);
 
 $manager->load('basic');
 $t->diag('Basic js/css package');
@@ -58,3 +59,27 @@ catch(sfConfigurationException $e)
 {
   $t->pass($message);
 }
+
+
+// Compressing
+$t->diag('Compressing a package');
+
+// setup
+$manager = new sfAssetsManager(false, null, clone $response);
+$manager->setConfiguration($config);
+
+// config
+$webDir = dirname(__FILE__).'/../web';
+sfConfig::set('sf_web_dir', $webDir);
+sfConfig::set('app_sf_assets_manager_plugin_enable_compressor', true);
+sfConfig::set('app_sf_assets_manager_plugin_js_dir', dirname(__FILE__).'/../fixtures/js');
+
+$manager->load('existing', 'js');
+$t->is_deeply(array_keys($manager->getResponse()->getJavascripts()), array('/js/existing.package.js'), '->load() loads a package and sends the file path to the response');
+unlink($webDir.'/js/existing.package.js');
+
+sfConfig::set('app_sf_assets_manager_plugin_encode_filename', true);
+$manager->setResponse(clone $response);
+$manager->load('existing', 'js');
+$t->is_deeply(array_keys($manager->getResponse()->getJavascripts()), array('/js/'.md5('existing').'.js'), '->load() loads a package and sends the the encoded file path to the response');
+unlink($webDir.'/js/'.md5('existing').'.js');
