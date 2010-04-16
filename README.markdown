@@ -34,7 +34,7 @@ Create a file /config/assets_manager.yml :
 
 
     packages:
-      mypage:
+      mypackage:
         js:   [script1.js, script2.js]
         css:  [style1.css, style2.css]
 
@@ -43,7 +43,7 @@ In your template :
 Use the helper and import the "mypage" package :
 
     <? php use_helper('sfAssetsManager') ?>
-    <? php load_assets('mypage') ?>
+    <? php load_assets('mypackage') ?>
     
 
 ## Advanced example
