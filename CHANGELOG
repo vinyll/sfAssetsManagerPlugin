@@ -2,6 +2,8 @@
 ----------
 
 * Added compressor packages with its classes
+* Added debug toolbar
+* Refactored sfAssetsManager class
 
 
 2010-04-09

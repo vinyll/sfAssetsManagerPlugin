@@ -1,5 +1,4 @@
 <?php
-require_once dirname(__FILE__).'/cache/sfAssetsManagerCache.class.php';
 /**
  * Manage Response assets
  *
@@ -9,8 +8,6 @@ require_once dirname(__FILE__).'/cache/sfAssetsManagerCache.class.php';
  */
 class sfAssetsManager
 {
-  protected  $config;
-  
   /**
    * @property sfContext
    */
@@ -25,18 +22,22 @@ class sfAssetsManager
    * @property sfConfigCache
    */
   protected $configCache;
+             
+  /**
+   * @property sfEventDispatcher
+   */
+  protected $dispatcher;
    
   /**
    * @property sfAssetsManagerPackageCollection
    */
   protected $packages;
   
-  protected $loadedPackages = array();
-  
   /**
-   * @property sfAssetsManagerCache
+   * List of packages that have been loaded
+   * @property array
    */
-  protected $cache;
+  protected $loadedPackages = array();
   
   /**
    * @var sfAssetsManager
@@ -49,20 +50,10 @@ class sfAssetsManager
    * @param sfResponse $response
    * @param sfConfigCache $configCache
    */
-  public function __construct($autoload = true, $configCache = null, $response = null, $context = null)
+  public function __construct($response, $autoload = true, $configCache = null)
   {
-    if($context)
-    {
-      $this->context = $context;
-    }
-    else
-    {
-      $this->context = sfContext::getInstance();
-    }
-    if($response)
-    {
-      $this->setResponse($response);
-    }
+    $this->setResponse($response);
+    
     if($configCache)
     {
       $this->setConfigCache($configCache);
@@ -71,7 +62,6 @@ class sfAssetsManager
     {
       $this->loadPackagesConfiguration();
     }
-    $this->cache = new sfAssetsManagerCache;
   }
   
   
@@ -84,7 +74,7 @@ class sfAssetsManager
   {
     if(!self::$instance)
     {
-      self::$instance = new self();
+      self::$instance = new self(sfContext::getInstance());
     }
     return self::$instance;
   }
@@ -106,6 +96,10 @@ class sfAssetsManager
       }
     }
     
+    if($this->packages === null)
+    {
+      throw new LogicException('Unable to load a package if no configuration is setup.');
+    }
     $package = $this->packages->get($name);
     if(!$package)
     {
@@ -129,10 +123,13 @@ class sfAssetsManager
     
     $this->loadedPackages[] = $package;
     
-    $this->context->getEventDispatcher()->notify(new sfEvent($this, 'sfAssetsManagerPlugin.load_package'), array(
-      'package'  => $package,
-      'type'     => $type
-    ));
+    if($this->dispatcher)
+    {
+      $this->getDispatcher()->notify(new sfEvent($this, 'sfAssetsManagerPlugin.load_package'), array(
+        'package'  => $package,
+        'type'     => $type
+      ));
+    }
   }
   
   
@@ -212,7 +209,13 @@ class sfAssetsManager
     $this->setConfiguration(include($this->getConfigCache()->checkConfig('config/assets_manager.yml')));
   }
   
-
+  
+  /**
+   * Computes a absolute asset ressource.
+   * @param string $file Relative or absolute file or url
+   * @param string $type "js" or "css"
+   * @return string Return the absolute ressource (path or url)
+   */
   protected function getAbsoluteDir($file, $type)
   {
     // Compute a absolute local web path
@@ -248,18 +251,7 @@ class sfAssetsManager
     {
       throw new sfConfigurationException(sprintf('The %s class requires configuration with "packages" root key.', __CLASS__));
     }
-    $this->config = $config;
     $this->setPackages($config['packages']);
-  }
-  
-  
-  /**
-   * Retrieves the global configuration or load the configuration file
-   * @return array The configuration array
-   */
-  public function getConfiguration()
-  {
-    return $this->config;
   }
   
   
@@ -330,6 +322,28 @@ class sfAssetsManager
   }
   
   
+  /**
+   * @param sfEventDispatcher $dispatcher
+   */
+  public function setDispatcher(sfEventDispatcher $dispatcher)
+  {
+    $this->dispatcher = $dispatcher;
+  }
+  
+  
+  /**
+   * @return sfEventDispatcher
+   */
+  public function getDispatcher()
+  {
+    return $this->dispatcher;
+  }
+  
+  
+  /**
+   * Get the list of packages that habe been loaded
+   * @return array
+   */
   public function getLoadedPackages()
   {
     return $this->loadedPackages;
