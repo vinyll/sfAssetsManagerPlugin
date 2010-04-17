@@ -5,6 +5,8 @@ require dirname(__FILE__).'/../../lib/compressor/sfAssetsManagerJSMinifier.class
 
 $config = include dirname(__FILE__).'/../fixtures/assets_manager.yml.php';
 
+sfConfig::set('app_sf_assets_manager_plugin_filename_format', '%s.package');
+
 $response = new sfWebResponse(new sfEventDispatcher);
 $manager = new sfAssetsManager(false, null, clone $response);
 $manager->setConfiguration($config);

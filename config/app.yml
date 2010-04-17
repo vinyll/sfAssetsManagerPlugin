@@ -1,5 +1,8 @@
 all:
   sf_assets_manager_plugin:
     enable_compressor:    false     # Enable merging and minifying files
+    filename_format:      %s.package # Format of the name where "%s" is the loaded package name
+    # Options for enable_compressor set to true
     encode_filename:      false     # Should the file generate be the given package name or encoded
+    enable_supercache:    false     # Set to true to create file only once (prod purpose)
     
