@@ -50,10 +50,12 @@ class sfAssetsManager
    * @param sfResponse $response
    * @param sfConfigCache $configCache
    */
-  public function __construct($response, $autoload = true, $configCache = null)
+  public function __construct(sfWebResponse $response = null, $autoload = true, sfConfigCache $configCache = null)
   {
-    $this->setResponse($response);
-    
+    if($response)
+    {
+      $this->setResponse($response);
+    }
     if($configCache)
     {
       $this->setConfigCache($configCache);
@@ -74,7 +76,7 @@ class sfAssetsManager
   {
     if(!self::$instance)
     {
-      self::$instance = new self(sfContext::getInstance());
+      self::$instance = new self();
     }
     return self::$instance;
   }
@@ -88,6 +90,14 @@ class sfAssetsManager
    */
   public function load($name, $type = null)
   {
+    // supercache
+    if($this->loadFromCache($name, $type))
+    {
+      $package = $this->packages->get($name);
+      $this->packageLoaded($package, $type, 'supercache');
+      return;
+    }
+    
     if(is_array($name))
     {
       foreach($name as $singleName)
@@ -120,19 +130,69 @@ class sfAssetsManager
     }
     
     $this->addToResponse($javascripts, $stylesheets);
+    $this->packageLoaded($package, $type, 'realtime');
+  }
+  
+  
+  /**
+   * Checks if a supercache file exists and load it
+   * @param string $name Package name
+   * @param string $type "js" or "css"
+   * @return boolean true if loaded from cache
+   */
+  protected function loadFromCache($name, $type = null)
+  {
+    if(sfConfig::get('app_sf_assets_manager_plugin_enable_supercache', false)
+      && sfConfig::get('app_sf_assets_manager_plugin_enable_compressor', false))
+    {
+      $javascript = $type !== 'css' && file_exists(sfConfig::get('sf_web_dir').$this->getFileUri($name, 'js'))
+                   ? $this->getFileUri($name, 'js')
+                   : null;
+      $stylesheet = $type !== 'js' && file_exists(sfConfig::get('sf_web_dir').$this->getFileUri($name, 'css'))
+                   ? $this->getFileUri($name, 'css')
+                   : null;
+      if($javascript || $stylesheet)
+      {
+        $this->addToResponse((array) $javascript, (array) $stylesheet);
+        return true;
+      }
+    }
+    return false;
+  }
+  
+  
+  /**
+   * Stores and notifies that a package was loaded
+   * @param sfAssetsManagerPackage $package
+   * @param string $type
+   * @param string $source Source of the loading
+   */
+  protected function packageLoaded(sfAssetsManagerPackage $package, $type, $source = 'Realtime')
+  {
+    $this->loadedPackages[] = array(
+      'package' => $package,
+      'type'    => $type,
+      'source'  => $source
+    );
     
-    $this->loadedPackages[] = $package;
-    
-    if($this->dispatcher)
+    if($this->getDispatcher())
     {
       $this->getDispatcher()->notify(new sfEvent($this, 'sfAssetsManagerPlugin.load_package'), array(
         'package'  => $package,
-        'type'     => $type
+        'type'     => $type,
+        'source'   => $source
       ));
     }
   }
   
   
+  /**
+   * Pack files, minify contents and save result into a file.
+   * @param array $files
+   * @param sting $type "js" or "css"
+   * @param string $name
+   * @return string The web path of the created compressed file
+   */
   protected function compress(array $files, $type, $name)
   {
     if(empty($files))
@@ -245,7 +305,7 @@ class sfAssetsManager
    * Inject a configuration array
    * @param array $config
    */
-  public function setConfiguration($config)
+  public function setConfiguration(array $config)
   {
     if(!isset($config['packages']))
     {
@@ -258,7 +318,7 @@ class sfAssetsManager
   /**
    * @param sfAssetsManagerPackageCollection $packages
    */
-  public function setPackages($packages)
+  public function setPackages(array $packages)
   {
     $this->packages = new sfAssetsManagerPackageCollection();
     $this->packages->fromArray($packages);
@@ -336,6 +396,10 @@ class sfAssetsManager
    */
   public function getDispatcher()
   {
+    if(!$this->dispatcher && sfContext::hasInstance())
+    {
+      $this->dispatcher = sfContext::getInstance()->getEventDispatcher();
+    }
     return $this->dispatcher;
   }
   

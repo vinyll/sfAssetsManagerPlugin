@@ -1,9 +1,10 @@
-2010-04-16
+2010-04-19
 ----------
 
 * Added compressor packages with its classes
-* Added debug toolbar
+* Added debug toolbar and loading notification
 * Refactored sfAssetsManager class
+* Added app options for storing assets
 
 
 2010-04-09
