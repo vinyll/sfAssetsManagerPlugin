@@ -113,7 +113,11 @@ class sfAssetsManager
     $package = $this->packages->get($name);
     if(!$package)
     {
-      throw new sfConfigurationException(sprintf('No package called "%s" could be found.', $name));
+      if(sfConfig::get('app_sf_assets_manager_plugin_display_errors', true) === true)
+      {
+        throw new sfConfigurationException(sprintf('No package called "%s" could be found.', $name));
+      }
+      return;
     }
     
     $javascripts = $type !== 'css'

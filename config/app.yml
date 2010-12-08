@@ -1,5 +1,6 @@
 all:
   sf_assets_manager_plugin:
+    display_errors:       true      # Should it display errors and throw 500 ?
     autoload_helper:      true      # Automatically adds sfAssetsManager to default helpers
     enable_compressor:    false     # Enable merging and minifying files
     # Below options only take affect with compressor enbled
