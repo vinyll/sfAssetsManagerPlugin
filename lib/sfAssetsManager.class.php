@@ -288,12 +288,12 @@ class sfAssetsManager
     $js = '';
     foreach($subject->getJavascripts() as $file => $options)
     {
-      $js .= stylesheet_tag($file, $options);
+      $js .= javascript_include_tag($file, $options);
     }
     $tmpJsTag = sfConfig::get('app_sf_assets_manager_plugin_alter_response_tempjstag');
     
-    $altered = preg_replace($tmpCssTag, $css, $response);
-    return preg_replace($tmpJsTag, $js, $altered);
+    $altered = preg_replace(sprintf('`%s`', $tmpCssTag), $css, $response);
+    return preg_replace(sprintf('`%s`', $tmpJsTag), $js, $altered);
   }
   
   
