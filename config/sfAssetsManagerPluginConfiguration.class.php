@@ -11,5 +11,10 @@ class sfAssetsManagerPluginConfiguration extends sfPluginConfiguration
       $helpers = array_merge(sfConfig::get('sf_standard_helpers', array()), array('sfAssetsManager'));
       sfConfig::set('sf_standard_helpers', $helpers);
     }
+    
+    if(sfConfig::get('app_sf_assets_manager_plugin_alter_response', false))
+    {
+      $this->dispatcher->connect('response.filter_content', array('sfAssetsManager', 'alterResponse'));
+    }
   }
 }

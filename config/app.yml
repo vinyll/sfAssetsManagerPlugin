@@ -9,3 +9,11 @@ all:
     enable_supercache:    false     # Set to true to create file only once (prod purpose)
     js_dir:               %SF_ROOT_DIR%/data/assets/js  # Path for original javascript files
     css_dir:              %SF_ROOT_DIR%/data/assets/css # Path for original stylesheet files
+    alter_response:       false    # When false, the regular helper can be used. When true, 
+                                   # You should use the stylesheet_assets() and javascript_assets()
+                                   # helper and the reponse will be modified after it is loaded
+                                   # (useful for late rendering like loading from database)
+    alter_response_tempcsstag: '<link rel="assetsmanager" />' # Temporary css tag to replaced 
+                                                             # when response is altered
+    alter_response_tempjstag: '<script type="assetsmanager" />' # Temporary js tag to replaced 
+                                                             # when response is altered

@@ -266,6 +266,38 @@ class sfAssetsManager
   
   
   /**
+   * Alters the response upon an event replacing the temp css tag and temp js tag
+   * with the actual stylesheets and javascripts items read from the response.
+   * @param sfEvent $event
+   * @param string $response
+   * @return string the altered response content
+   */
+  static public function alterResponse(sfEvent $event, $response)
+  {
+    $self = self::getInstance();
+    $self->getContext()->getConfiguration()->loadHelpers('Asset');
+    $subject = $event->getSubject();
+    // Stylesheets
+    $css = '';
+    foreach($subject->getStylesheets() as $file => $options)
+    {
+      $css .= stylesheet_tag($file, $options);
+    }
+    $tmpCssTag = sfConfig::get('app_sf_assets_manager_plugin_alter_response_tempcsstag');
+    // Javascripts
+    $js = '';
+    foreach($subject->getJavascripts() as $file => $options)
+    {
+      $js .= stylesheet_tag($file, $options);
+    }
+    $tmpJsTag = sfConfig::get('app_sf_assets_manager_plugin_alter_response_tempjstag');
+    
+    $altered = preg_replace($tmpCssTag, $css, $response);
+    return preg_replace($tmpJsTag, $js, $altered);
+  }
+  
+  
+  /**
    * Loads the assets_manager.yml files
    */
   protected function loadPackagesConfiguration()
@@ -402,7 +434,7 @@ class sfAssetsManager
   {
     if(!$this->dispatcher && sfContext::hasInstance())
     {
-      $this->dispatcher = sfContext::getInstance()->getEventDispatcher();
+      $this->dispatcher = $this->getContext()->getEventDispatcher();
     }
     return $this->dispatcher;
   }
@@ -415,6 +447,16 @@ class sfAssetsManager
   public function getLoadedPackages()
   {
     return $this->loadedPackages;
+  }
+  
+  
+  public function getContext()
+  {
+    if(!$this->context)
+    {
+      $this->context = sfContext::getInstance();
+    }
+    return $this->context;
   }
   
 }

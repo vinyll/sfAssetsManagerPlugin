@@ -149,6 +149,39 @@ This will use javascript file in the called ordered and will result with
 an inclusion of myfile.js after assets from package1 and before those
 from package2. 
 
+
+### Altering response after its full load
+
+In some case (such a loading a package from a DB rendered content) the sfWebResponse
+content is not properly up-to-date with its actual stylesheets and javascripts (symfony bug ?).
+
+In this example case it is useful to alter the js and css tag from the response content.
+Therefore, you may activate the alter_response configuration flag and use the appropriate tags.
+
+#### config
+
+    app:
+      sf_assets_manager_plugin:
+        alter_response: true
+
+### layout
+
+replace 
+
+    <?php include_stylesheets() ?>
+    <?php include_javascripts() ?>
+
+with
+
+    <?php echo stylesheet_assets() ?>
+    <?php echo javascript_assets() ?>
+
+
+> Notice that using these helpers would still work the alter_response configuration set to false
+> as it would render the regular helpers.
+
+
+
 ## Configuration
 
 
