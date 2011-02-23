@@ -275,7 +275,7 @@ class sfAssetsManager
   static public function alterResponse(sfEvent $event, $response)
   {
     $self = self::getInstance();
-    $self->getContext()->getConfiguration()->loadHelpers('Asset');
+    $self->getContext()->getConfiguration()->loadHelpers(array('Tag', 'Asset'));
     $subject = $event->getSubject();
     // Stylesheets
     $css = '';
