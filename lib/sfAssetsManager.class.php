@@ -387,11 +387,12 @@ class sfAssetsManager
    */
   public function getResponse()
   {
-    if(!$this->response)
+    $response = $this->response;
+    if ($response === null)
     {
-      $this->response = sfContext::getInstance()->getResponse();
+      $response = sfContext::getInstance()->getResponse();
     }
-    return $this->response;
+    return $response;
   }
   
   
