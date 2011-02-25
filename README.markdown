@@ -42,22 +42,12 @@ In your template :
 
 Use the helper and import the "mypage" package :
 
-    <? php use_helper('sfAssetsManager') ?>
     <? php load_assets('mypackage') ?>
     
 
 ## Advanced example
 
-If you use this plugin, you should use it for your whole 
-project and therefore you will use sfAssetManager helper
-all the way.
-
-So you can set it up in your configuration (…/config/settings.yml) :
-
-    standard_helpers: [Partial, Cache, sfAssetsManager]
-
-
-And configure your packages (…/config/assets_manager.yml) :
+Sample of a config/assets_manager.yml :
 
     packages:
       jquery:
@@ -88,12 +78,10 @@ In your templates :
 
 …/templates/homepageSuccess.php :
 
-    <?php use_helper('sfAssetsManager') ?>
     <?php load_assets('homepage') ?>
 
 …/templates/subscribeSuccess.php :
 
-    <?php use_helper('sfAssetsManager') ?>
     <?php load_assets('subscribe') ?>
         
 
@@ -137,7 +125,7 @@ themeroller.css, yellowDatepicker.css, layout.css, dualview.css
 
 By default it should be called in a template and therefore use the helper.
 
-However, in some case you must call a package from an action or a class.
+However, in some case you might need to call a package from an action or a class.
 
     $manager = new sfAssetsManager();
     $manager->load('mypackage');
@@ -181,7 +169,6 @@ with
 > as it would render the regular helpers.
 
 
-
 ## Configuration
 
 
@@ -215,7 +202,3 @@ The assets will be loaded in the same order than the array.
 
 See the tests files for further details.
 
-
-## Todo
-
-* Use a minifier to automatically compact files but make it optional.
