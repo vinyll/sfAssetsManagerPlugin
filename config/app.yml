@@ -15,5 +15,5 @@ all:
                                    # (useful for late rendering like loading from database)
     alter_response_tempcsstag: '<link rel="assetsmanager" />' # Temporary css tag to replaced 
                                                              # when response is altered
-    alter_response_tempjstag: '<script type="assetsmanager" />' # Temporary js tag to replaced 
+    alter_response_tempjstag: '<script type="assetsmanager"></script>' # Temporary js tag to replaced 
                                                              # when response is altered
