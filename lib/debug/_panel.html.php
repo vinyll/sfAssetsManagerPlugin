@@ -1,5 +1,5 @@
 <div id="sfWebDebugAssetsManager">
-  <style>
+  <style type="text/css">
   #sfWebDebugAssetsManager fieldset {
     border: none;
   }
